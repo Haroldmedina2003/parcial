@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  neo4j:
+    image: neo4j:latest
+    container_name: neo4j
+    ports:
+      - "7474:7474"  # Puerto para el dashboard de Neo4j
+      - "7687:7687"  # Puerto para conexiones a la base de datos
+    volumes:
+      - ./neo4j/data:/data  # Persistencia de datos de Neo4j
+    environment:
+      NEO4J_AUTH: neo4j/nicolas2025  # Usuario y contraseña
+    networks:
+      - etl_network
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    ports:
+      - "5432:5432"  # Puerto para PostgreSQL
+    volumes:
+      - ./postgres/data:/var/lib/postgresql/data  # Persistencia de datos de PostgreSQL
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: etl_db
+    networks:
+      - etl_network
+
+  api:
+    build: ./api
+    container_name: api
+    ports:
+      - "5000:5000"  # Puerto para la API
+    volumes:
+      - ./api:/app  # Montar el código de la API
+      - ./volumes/csv:/app/csv  # Carpeta para el archivo CSV
+    depends_on:
+      - neo4j
+      - postgres
+    networks:
+      - etl_network
+
+networks:
+  etl_network:
+    driver: bridge
